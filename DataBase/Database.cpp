@@ -3,18 +3,6 @@
 //即时功能
 bool fileIsExist(string filePath);
 
-bool fileIsExist(string filePath)
-{
-	fstream check;
-	check.open(filePath.c_str(), ios::in);
-	if (check)
-	{
-		check.close();
-		return true;
-	}
-	return false;
-}
-
 vector<int> getWidth(vector<vector<string>> table)
 {
 	vector<int> Width;
@@ -81,7 +69,7 @@ void Database::loadDatabase(string loadPath)
 		string lineStr;
 		string str;
 		fstream input;
-		input.open(loadPath.c_str(), ios::in);
+		input.open(loadPath.c_str(), ios::in);//通过流的操作来通过以“,”为分隔符号
 
 		getline(input, lineStr);
 		LOGO = lineStr;
@@ -155,6 +143,19 @@ void Database::loadTable(string loadPath)
 			stringstream ss(lineStr);
 			getline(ss, str, ',');
 			tableName = str;
+			int posName = 1;
+			if (checkSameName(tableName))
+			{
+				while (true)
+				{
+					if (!checkSameName(tableName + to_string(posName)))
+					{
+						tableName += to_string(posName);
+						break;
+					}
+					posName++;
+				}
+			}
 			getline(ss, str, ',');
 			rowSize = atoi(str.c_str());
 			getline(ss, str, ',');
@@ -206,8 +207,7 @@ void Database::saveDatabase()
 				{
 					for (int columnIndex = 0; columnIndex < columnSzie; columnIndex++)
 					{
-						string data = BASE[mark][rowIndex][columnIndex];
-						output << data << ",";
+						output << BASE[mark][rowIndex][columnIndex] << ",";
 					}
 					output << endl;
 				}
@@ -359,7 +359,6 @@ void Database::addColumn()
 
 void Database::insertRow(int rowIndex)
 {
-	rowIndex += 1;
 	if (mark < size && mark >= 0)
 	{
 		int columnSize = getColumnSize();
@@ -396,16 +395,16 @@ void Database::insertColumn(int columnIndex)
 	}
 }
 
-void Database::deleteTable(int currentMark)
+void Database::deleteTable(int certainMark)
 {
-	if (currentMark < size)
+	if (certainMark < size)
 	{
-		BASE.erase(BASE.begin() + currentMark);
-		tablesName.erase(tablesName.begin() + currentMark);
+		BASE.erase(BASE.begin() + certainMark);
+		tablesName.erase(tablesName.begin() + certainMark);
 		size--;
-		if (mark == currentMark)
+		if (mark == certainMark)
 			mark = -1;
-		else if (mark > currentMark)
+		else if (mark > certainMark)
 			mark -= 1;
 	}
 }
@@ -467,15 +466,27 @@ void Database::printTable(int mark)
 		string tabeName = tablesName[mark];
 		cout << "表的名称: " << setw(16) << left << tabeName << "表大小: " << rowSize - 1 << "行×" << columnSize << "列" << endl;
 		vector<int> Width = getWidth(table);
-		for (int i = 0; i < rowSize; i++)
+		for (int rowIndex = 0; rowIndex < rowSize; rowIndex++)
 		{
-			for (int j = 0; j < columnSize; j++)
+			for (int columnIndex = 0; columnIndex < columnSize; columnIndex++)
 			{
-				cout << setw(Width[j] + 4) << left << table[i][j];
+				cout << setw(Width[columnIndex] + 4) << left << table[rowIndex][columnIndex];
 			}
 			cout << endl;
 		}
 	}
+}
+
+void Database::printRow(int mark, int rowIndex)
+{
+	vector<vector<string > > table = BASE[mark];
+	vector<int> Width = getWidth(table);
+	int coulumnSize = BASE[mark][rowIndex].size();
+	for (int columnIndex = 0; columnIndex < coulumnSize; columnIndex++)
+	{
+		cout << setw(Width[columnIndex] + 4) << left << table[rowIndex][columnIndex];
+	}
+	cout << endl;
 }
 
 //其他功能
@@ -527,6 +538,8 @@ string Database::getData(int mark, int rowIndex, int columnIndex)
 void Database::searchInBase(string data)
 {
 	int finded = 0;
+	vector<int> marks;
+	vector<int> rowIndexs;
 	for (int i = 0; i < size; i++)
 	{
 		for (int j = 1; j < BASE[i].size(); j++)
@@ -536,21 +549,55 @@ void Database::searchInBase(string data)
 				if (data == BASE[i][j][k])
 				{
 					finded++;
-					cout << "数据出现在\"" << getTableName(i) << "\"表，第" << j << "行，第" << k << "列" << endl;
+					cout << "数据\"" << data <<"\"出现在\"" << getTableName(i) << "\"表，记录索引: " << j - 1 << "; 字段索引: " << k << endl;
+					if (finded == 1)
+					{
+						marks.push_back(i);
+						rowIndexs.push_back(j);
+					}
+					if (rowIndexs.size() != 0 && j != rowIndexs[rowIndexs.size() - 1])
+					{
+						marks.push_back(i);
+						rowIndexs.push_back(j);
+					}
 				}
 			}
 		}
 	}
 	if (finded == 0)
 		cout << "未搜索到相关数据!";
+	else
+	{
+		cout << "共计" << finded << "个相关数据" << endl;
+		cout << "是否打印相关记录[y/n]: ";
+		char chioce;
+		cin >> chioce;
+		if (chioce == 'y')
+		{
+			for (int i = 0; i < marks.size(); i++)
+			{
+				printRow(marks[i], rowIndexs[i]);
+			}
+			cout << "完成搜索。" << endl;
+		}
+		else if (chioce == 'n')
+		{
+			cout << "完成搜索。" << endl;
+		}
+		else
+		{
+			cout << "无效输入!取消操作" << endl;
+		}
+	}
 }
 
 void Database::searchInTable(string data, vector<int> tableMarks)
 {
+	vector<int> marks;
+	vector<int> rowIndexs;
 	int mark;
-	int size = tableMarks.size();
 	int finded = 0;
-	for (int i = 0; i < size; i++)
+	for (int i = 0; i < tableMarks.size(); i++)
 	{
 		mark = tableMarks[i];
 		for (int j = 1; j < BASE[mark].size(); j++)
@@ -560,15 +607,46 @@ void Database::searchInTable(string data, vector<int> tableMarks)
 				if (data == BASE[mark][j][k])
 				{
 					finded++;
-					cout << "数据出现在\"" << getTableName(mark) << "\"表，第" << j << "行，第" << k << "列" << endl;
+					cout << "数据出现在\"" << getTableName(mark) << "\"表，记录索引: " << j - 1 << "; 字段索引" << k << endl;
+					if (finded == 1)
+					{
+						marks.push_back(mark);
+						rowIndexs.push_back(j);
+					}
+					if (rowIndexs.size() != 0 && j != rowIndexs[rowIndexs.size() - 1])
+					{
+						marks.push_back(mark);
+						rowIndexs.push_back(j);
+					}
 				}
 			}
 		}
 	}
 	if (finded == 0)
-		cout << "未搜索到相关数据!" << endl;
+		cout << "未搜索到相关数据!";
 	else
-		cout << "共出现" << finded << "次" << endl;
+	{
+		cout << "共计" << finded << "个相关数据" << endl;
+		cout << "是否打印相关记录[y/n]: ";
+		char chioce;
+		cin >> chioce;
+		if (chioce == 'y')
+		{
+			for (int i = 0; i < marks.size(); i++)
+			{
+				printRow(marks[i], rowIndexs[i]);
+			}
+			cout << "完成搜索。" << endl;
+		}
+		else if (chioce == 'n')
+		{
+			cout << "完成搜索。" << endl;
+		}
+		else
+		{
+			cout << "无效输入!取消操作" << endl;
+		}
+	}
 }
 
 vector<string> Database::getTablesName()
@@ -579,4 +657,16 @@ vector<string> Database::getTablesName()
 string Database::getDefaultPath()
 {
 	return defaultPath;
+}
+
+bool fileIsExist(string filePath)
+{
+	fstream check;
+	check.open(filePath.c_str(), ios::in);
+	if (check)
+	{
+		check.close();
+		return true;
+	}
+	return false;
 }

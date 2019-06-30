@@ -11,6 +11,13 @@ void printControl_main(Database base)
 	if (base.getMark() != -1)
 	{
 		cout << "表大小: " << base.getRowSize() - 1 << "行×" << base.getColumnSize() << "列" << endl;
+		if (isPrint)
+		{
+			int mark = base.getMark();
+			if (mark != -1)
+				base.printTable(mark);
+		}
+		cout << endl;
 	}
 	cout << "主功能栏:" << endl;
 	cout << "1、文件" << endl;
@@ -18,7 +25,7 @@ void printControl_main(Database base)
 	cout << "3、编辑" << endl;
 	cout << "4、搜索" << endl;
 	cout << "5、打印" << endl;
-	cout << "6、帮助" << endl;
+	//cout << "6、帮助" << endl; //用来打印该程序的一些说明，未对其进行实现
 	cout << "*、退出数据库" << endl;
 	cout << "请选择功能: ";
 }
@@ -30,7 +37,15 @@ void printControl_file(Database base)
 	if (base.getMark() != -1)
 	{
 		cout << "表大小: " << base.getRowSize() - 1 << "行×" << base.getColumnSize() << "列" << endl;
+		if (isPrint)
+		{
+			int mark = base.getMark();
+			if (mark != -1)
+				base.printTable(mark);
+		}
+		cout << endl;
 	}
+
 	cout << "文件 功能栏:" << endl;
 	cout << "1、创建数据库" << endl;
 	cout << "2、打开数据库" << endl;
@@ -50,6 +65,13 @@ void printControl_base(Database base)
 	if (base.getMark() != -1)
 	{
 		cout << "表大小: " << base.getRowSize() - 1 << "行×" << base.getColumnSize() << "列" << endl;
+		if (isPrint)
+		{
+			int mark = base.getMark();
+			if (mark != -1)
+				base.printTable(mark);
+		}
+		cout << endl;
 	}
 	cout << "数据库 功能栏:" << endl;
 	cout << "1、创建数据库" << endl;
@@ -69,6 +91,13 @@ void printControl_table(Database base)
 	if (base.getMark() != -1)
 	{
 		cout << "表大小: " << base.getRowSize() - 1 << "行×" << base.getColumnSize() << "列" << endl;
+		if (isPrint)
+		{
+			int mark = base.getMark();
+			if (mark != -1)
+				base.printTable(mark);
+		}
+		cout << endl;
 	}
 	cout << "编辑 功能栏:" << endl;
 	cout << "1、创建表" << endl;
@@ -100,6 +129,13 @@ void printControl_search(Database base)
 	if (base.getMark() != -1)
 	{
 		cout << "表大小: " << base.getRowSize() - 1 << "行×" << base.getColumnSize() << "列" << endl;
+		if (isPrint)
+		{
+			int mark = base.getMark();
+			if (mark != -1)
+				base.printTable(mark);
+		}
+		cout << endl;
 	}
 	cout << "搜索 功能栏:" << endl;
 	cout << "1、数据库中查找" << endl;
@@ -115,15 +151,27 @@ void printControl_printf(Database base)
 	if (base.getMark() != -1)
 	{
 		cout << "表大小: " << base.getRowSize() - 1 << "行×" << base.getColumnSize() << "列" << endl;
+		if (isPrint)
+		{
+			int mark = base.getMark();
+			if (mark != -1)
+				base.printTable(mark);
+		}
+		cout << endl;
 	}
 	cout << "打印 功能栏:" << endl;
 	cout << "1、查看所有表" << endl;
 	cout << "2、打印指定表" << endl;
-	if (base.getMark() != -1)
+	cout << "3、是否显示当前表: ";
+	if (isPrint)
 	{
-		cout << "3、打印当前表" << endl;
-
+		cout << "显示" << endl;
 	}
+	else
+	{
+		cout << "关闭" << endl;
+	}
+	cout << "4、打印当前表" << endl;
 	cout << "*、返回上一级菜单" << endl;
 	cout << "请选择功能: ";
 }
@@ -132,6 +180,7 @@ void printControl_printf(Database base)
 void function_main(Database & base, int& mainChoice)
 {
 	system("cls");
+
 	while (true)
 	{
 		printControl_main(base);
@@ -160,9 +209,9 @@ void function_main(Database & base, int& mainChoice)
 		case '5':
 			function_printf(base);
 			break;
-		case '6':
-			
-			break;
+		// case '6':
+			//这里留了一个“帮助”功能的接口
+			// break;
 		default:
 			cout << "请重新选择功能!" << endl;
 			pause();
@@ -337,13 +386,10 @@ void function_table(Database & base)
 			case 'j':
 				changeRangeData(base);
 				break;
-			case 'k':
-				printTable(base);
-				break;
 			default:
-			cout << "请重新选择功能!" << endl;
-			pause();
-			system("cls");
+				cout << "请重新选择功能!" << endl;
+				pause();
+				system("cls");
 			}
 		}
 	}
@@ -406,6 +452,9 @@ void function_printf(Database & base)
 			printCertainTable(base);
 			break;
 		case '3':
+			changeIsPrint();
+			break;
+		case '4':
 			printTable(base);
 			break;
 		default:
@@ -691,8 +740,9 @@ void insertRow(Database & base)
 	}
 	else if (rowIndex >= base.getRowSize())
 	{
+		base.addRow();
 		rowIndex = base.getRowSize() - 1;
-		cout << "索引位置超过范围，在末行处z增加记录!" << endl;
+		cout << "索引位置超过范围，在末行处增加记录!" << endl;
 	}
 	else
 	{
@@ -729,6 +779,7 @@ void insertColumn(Database & base)
 	else if (columnIndex >= base.getColumnSize())
 	{
 		base.addColumn();
+		columnIndex = base.getColumnSize() - 1;
 		cout << "索引位置超过范围，在末列处增加字段!" << endl;
 	}
 	else
@@ -815,7 +866,7 @@ void searchInTable(Database & base)
 		if (mark != -1)
 			tableMarks.push_back(mark);
 		else if (tableName != "END")
-			cout << "不存在该表，请输入其他表的名称。" << endl;
+			cout << "不存在\"" << tableName << "\"此表!" << endl;
 	} while (tableName != "END");
 	if (tableMarks.size() > 0)
 		base.searchInTable(data, tableMarks);
@@ -862,6 +913,15 @@ void printCertainTable(Database & base)
 	else
 		cout << "不存在该表,无法打印!" << endl;
 	pause();
+	system("cls");
+}
+
+void changeIsPrint()
+{
+	if (isPrint)
+		isPrint = false;
+	else
+		isPrint = true;
 	system("cls");
 }
 
@@ -1080,7 +1140,7 @@ void changeRangeData(Database & base)
 			cin >> firstRowIndex;
 			cout << "请输入修改的第一个数据的字段索引: ";
 			cin >> firstColumnIndex;
-			cout << "请输入修改的最后个数据的字段索引: ";
+			cout << "请输入修改的最后个数据的记录索引: ";
 			cin >> endRowIndex;
 			cout << "请输入修改的最后个数据的字段索引: ";
 			cin >> endColumnIndex;
